@@ -23,4 +23,8 @@ table(sc_met, sc_pro)
 
 ## Trying another package
 
-library()
+library(Spectrum)
+test1 <- Spectrum(new_met,showpca=TRUE,fontsize=8,dotsize=2)
+test2 <- Spectrum(new_pro,showpca=TRUE,fontsize=8,dotsize=2)
+
+table(test1$assignments, test2$assignments)
