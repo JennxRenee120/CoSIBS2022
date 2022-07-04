@@ -1,8 +1,8 @@
 library(VIM)
 # knn imputation
 # log base 2 normalization
-met_dat <- read.delim("Desktop/COSIBS2022/Project/Metabolites.txt", sep = " ")
-pro_dat <- read.delim("Desktop/COSIBS2022/Project/Proteins.txt", sep = " ")
+met_dat <- read.delim("../Metabolites.txt", sep = " ")
+pro_dat <- read.delim("../Proteins.txt", sep = " ")
 
 met_dat_imputed <- kNN(data = met_dat, k = 10)
 pro_dat_imputed <- kNN(data = pro_dat, k = 10)
@@ -20,3 +20,7 @@ sc_met <- specc(new_met, centers=2)
 sc_pro <- specc(new_pro, centers=2)
 
 table(sc_met, sc_pro)
+
+## Trying another package
+
+library()
