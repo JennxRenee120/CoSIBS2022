@@ -49,7 +49,5 @@ pc12$PC1 <- as.numeric(pc12$PC1)
 pc12$PC2 <- as.numeric(pc12$PC2)
 
 ggplot(pc12, mapping = aes(x = PC1,
-                                  y = PC2, col = pc12[, 3])) + 
-  geom_point()
-
-##WTF??????
+                           y = PC2, 
+                           col = pc12[, 3])) + geom_point()
