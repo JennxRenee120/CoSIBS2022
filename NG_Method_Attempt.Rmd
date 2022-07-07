@@ -1,0 +1,72 @@
+---
+title: "NG_Paper_Method"
+author: "Mark Lamin"
+date: '2022-07-05'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(VIM)
+```
+
+```{r}
+#Reading data
+met_dat <- read.delim("../Metabolites.txt", sep = " ")
+pro_dat <- read.delim("../Proteins.txt", sep = " ")
+
+#knn imputation
+met_dat_imputed <- kNN(data = met_dat, k = 10)
+pro_dat_imputed <- kNN(data = pro_dat, k = 10)
+
+#log base 2 normalization
+met_dat_imp_norm <- log2(met_dat_imputed)
+pro_dat_imp_norm <- log2(pro_dat_imputed)
+
+#excluding boolean columns
+new_met <- met_dat_imp_norm[, 1:64]
+new_pro <- pro_dat_imp_norm[, 1:64]
+```
+
+```{r}
+#Met data first
+
+sigma <- 1
+num_col <- length(new_met[, 1])
+A <- matrix(rep(0, num_col^2), nrow = num_col)
+for (i in 1:num_col) {
+  for (j in 1:num_col) {
+    if(i!=j){
+    A[i, j] <- exp(0-(sum((new_met[i, ]-new_met[j, ])^2))/(2*(sigma)^2))
+    }
+  }
+}
+
+D <- matrix(rep(0, num_col^2), nrow = num_col)
+for (i in 1:num_col) {
+  D[i,i] <- (sum(A[i, ]))^(-0.5)
+}
+
+L <- D %*% A %*% D
+
+ev <- eigen(L)
+names(ev)
+
+x <- ev$vectors[, 1:2]
+sum(is.na(x))
+nrow(x)
+```
+
+
+```{r}
+for (i in 1:nrow(x)) {
+  x[i, ] <- x[i, ]/(sqrt(sum(x[i, ])))
+}
+
+y <- x
+
+km.out <- kmeans(y, 2, nstart = 20)
+my_clusters <- km.out$cluster
+my_clusters
+```
+
