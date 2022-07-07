@@ -57,10 +57,12 @@ sum(is.na(x))
 nrow(x)
 ```
 
-
 ```{r}
 for (i in 1:nrow(x)) {
-  x[i, ] <- x[i, ]/(sqrt(sum(x[i, ])))
+  if(sum(x[i, ] == c(0,0))!=2){
+    x[i, ] <- x[i, ]/(sqrt(sum((x[i, ])^2)))
+  }
+  
 }
 
 y <- x
