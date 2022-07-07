@@ -18,8 +18,7 @@ knn_log2 <- function(dat){
     log2()
 }
 
-new_met <- knn_log2(met_dat)
-new_pro <- knn_log2(pro_dat)
+new_met <- knn_log2(met_dat); new_pro <- knn_log2(pro_dat)
 
 ## PCA Visualization ##
 
@@ -45,9 +44,12 @@ pro_pc12 <- cbind(pro_pc12, rep("protein", length(pro_pc12[,1])))
 met_pc12 <- cbind(met_pc12, rep("metabolite", length(met_pc12[,1])))
 
 ## combining data
-pc12 <- rbind(pro_pc12, met_pc12)
-ggplot(data.frame(pc12), mapping = aes(x = pc12[, 1],
-                                  y = pc12[, 2], col = pc12[, 3])) + 
+pc12 <- as.data.frame(rbind(pro_pc12, met_pc12))
+pc12$PC1 <- as.numeric(pc12$PC1)
+pc12$PC2 <- as.numeric(pc12$PC2)
+
+ggplot(pc12, mapping = aes(x = PC1,
+                                  y = PC2, col = pc12[, 3])) + 
   geom_point()
 
 ##WTF??????
