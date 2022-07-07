@@ -76,3 +76,12 @@ my_clusters <- km.out$cluster
 my_clusters
 ```
 
+```{r}
+#prcomp(dat)$x[,1:2]
+
+ggplot(data.frame(prcomp(new_met)$x[,1:2])) + 
+  geom_point(mapping = aes(x = prcomp(new_met)$x[,1],
+                           y = prcomp(new_met)$x[,2],
+                           col = as.factor(my_clusters)))
+```
+
