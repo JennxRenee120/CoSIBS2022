@@ -30,7 +30,7 @@ new_pro <- pro_dat_imp_norm[, 1:64]
 ```
 
 ```{r}
-#Met data first
+#Met data first 
 
 sigma <- 1
 num_col <- length(new_met[, 1])
