@@ -23,30 +23,22 @@ new_pro <- knn_log2(pro_dat)
 
 ## PCA Visualization ##
 
-## Metabolome first two principal components
-#  No scaling
-plot(prcomp(new_met)$x[,1:2], main = "PC-1 vs PC-2 in Metabolome")
+first2pc <- function(dat, omic_field, scaled){
+  plot(prcomp(dat)$x[,1:2], 
+       main = paste0("PC-1 vs PC-2 in ", omic_field, "\nScaled = ", scaled), 
+       scale. = scaled)
+}
 
-## Proteome first two principal components
-#No scaling
-pr.pro <- prcomp(new_pro)
-plot(pr.pro$x[,1:2])
+par(mfrow = c(2,2))
 
-## Metabolome first two principal components
-#Scaled
-pr.met <- prcomp(new_met, scale. = T)
-plot(prcomp(new_met, scale. = T)$x[,1:2])
-
-## Proteome first two principal components
-#Scaled
-pr.pro <- prcomp(new_pro, scale. = T)
-plot(prcomp(new_pro, scale. = T)$x[,1:2])
+first2pc(new_met, "Metabolome", T); first2pc(new_met, "Metabolome", F)
+first2pc(new_pro, "Proteome", T); first2pc(new_pro, "Proteome", F)
 
 ## Trying to combine proteome and metabolome
 
 ## pulling out first two PCs
-pro_pc12 <- prcomp(new_met, scale. = T)$x[,1:2]
-met_pc12 <- pr.met$x[,1:2]
+pro_pc12 <- prcomp(new_pro, scale. = T)$x[,1:2]
+met_pc12 <- prcomp(new_met, scale. = T)$x[,1:2]
 
 ## labeling whether protein or metabolite
 pro_pc12 <- cbind(pro_pc12, rep("protein", length(pro_pc12[,1])))
