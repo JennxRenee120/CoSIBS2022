@@ -6,6 +6,8 @@ This project aims to perform unsupervised learning on multi-omics data, includin
 
 ## Dependencies
 
-Data Visualization:
+Data Visualization: ggthemes
 
-Biostatistics-Specific: 
+Biostatistics-Specific: VIM, FCPS
+
+Mathematical: tidyverse, kernlab, Spectrum
