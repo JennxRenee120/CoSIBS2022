@@ -8,6 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(VIM)
+library(tidyverse)
 ```
 
 ```{r}
@@ -37,7 +38,9 @@ A <- matrix(rep(0, num_col^2), nrow = num_col)
 for (i in 1:num_col) {
   for (j in 1:num_col) {
     if(i!=j){
-    A[i, j] <- exp(0-(sum((new_met[i, ]-new_met[j, ])^2))/(2*(sigma)^2))
+      diff <- new_met[i, ]-new_met[j, ]
+      nm <- sum(diff^2)
+    A[i, j] <- exp(-diff/(2*sigma^2))
     }
   }
 }
@@ -59,8 +62,9 @@ nrow(x)
 
 ```{r}
 for (i in 1:nrow(x)) {
-  if(sum(x[i, ] == c(0,0))!=2){
-    x[i, ] <- x[i, ]/(sqrt(sum((x[i, ])^2)))
+  if((sum(x[i, ] == c(0,0)))!=2){
+    my_len <- sqrt(sum((x[i, ])^2))
+    x[i, ] <- x[i, ]/my_len
   }
   
 }
