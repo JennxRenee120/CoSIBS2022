@@ -1,30 +1,32 @@
+#### Visualizing PCA in Metabolome and Proteome
+
 library(VIM)
 library(tidyverse)
 
 ## Data Cleaning ##
 
-#Reading data
-met_dat <- read.delim("../Metabolites.txt", sep = " ")
-pro_dat <- read.delim("../Proteins.txt", sep = " ")
+## Reading data
+met_dat <- read.delim("Metabolites.txt", sep = " ")
+pro_dat <- read.delim("Proteins.txt", sep = " ")
 
-#knn imputation
-met_dat_imputed <- kNN(data = met_dat, k = 10)
-pro_dat_imputed <- kNN(data = pro_dat, k = 10)
+## Imputing values with knn, removing booleans, and log2 transform
 
-#log base 2 normalization
-met_dat_imp_norm <- log2(met_dat_imputed)
-pro_dat_imp_norm <- log2(pro_dat_imputed)
+knn_log2 <- function(dat){
+  dat %>%
+    kNN(k = 10) %>%
+    select(1:64) %>%
+    log2()
+}
 
-#excluding boolean columns
-new_met <- met_dat_imp_norm[, 1:64]
-new_pro <- pro_dat_imp_norm[, 1:64]
+new_met <- knn_log2(met_dat)
+new_pro <- knn_log2(pro_dat)
 
 ## PCA Visualization ##
 
 #Metabolome first two principal components
 #No scaling
 pr.met <- prcomp(new_met)
-plot(pr.met$x[,1:2])
+plot(pr.met$x[,1:2], main = "PC-1 vs PC-2 in Metabolome")
 
 #Proteome first two principal components
 #No scaling
