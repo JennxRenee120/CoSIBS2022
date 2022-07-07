@@ -40,7 +40,7 @@ for (i in 1:num_col) {
     if(i!=j){
       diff <- new_met[i, ]-new_met[j, ]
       nm <- sum(diff^2)
-    A[i, j] <- exp(-diff/(2*sigma^2))
+    A[i, j] <- exp(-nm/(2*sigma^2))
     }
   }
 }
