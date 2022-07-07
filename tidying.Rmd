@@ -18,7 +18,7 @@ metabolites <- read.table("C:\\Users\\Colette\\Downloads\\CoSIBS\\Multi-Omics Pr
 proteins <- read.table("C:\\Users\\Colette\\Downloads\\CoSIBS\\Multi-Omics Project\\Proteins.txt")
 ```
 
-# Initial visualizations
+### initial visualizations
 ```{r}
 boxplot(metabolites, beside=T)
 boxplot(metabolites[-c(1,3,4,5,10,11,12,26,33,34,36,37,39,41,49,50,54,63,64)], beside=T, outline=F)
@@ -46,7 +46,6 @@ met_imputed <- kNN(metabolites, variable=colnames(metabolites), k=10)
 prot_imputed <- kNN(proteins, variable=colnames(proteins), k=10)
 ```
 
-
 # Log_2 Normalization
 ```{r}
 #standardization? scaling? quantile normalization?
@@ -54,7 +53,7 @@ log_met <- log2(met_imputed)
 log_prot <- log2(prot_imputed)
 ```
 
-# post normalization visualization
+### post log EDA
 ```{r}
 boxplot(log_met, beside=T)
 boxplot(log_prot, beside=T)
@@ -71,40 +70,38 @@ featurePlot(x = log_prot[, 1:3],
             ## Add a key at the top
             auto.key = list(columns = 6))
 ```
-# fix exponential representation
-```{r}
-# log_met_full <- options("scipen"=0, "digits"=7)
-# log_met_full2 <- options(scipen = 999)
-log_met_full <- format(log_met, scientific = FALSE)
-```
 
-# Spectral clustering
+# Choose k
 ```{r}
+#get rid of infinite values... actually why did knn imputation cause this?
+log_met <- log_met[1:64]
+log_prot <- log_prot[1:90]
+
 #choose k
 set.seed(123)
-fviz_nbclust(df, kmeans, method = "wss")
-
-wss <- (nrow(log_met)-1)*sum(apply(log_met,2,var))
-for(i in 1:100) wss[i] <- sum(kmeans(log_met, centers=i)$withinss)
-plot(1:100, wss, type="b", xlab="Number of Clusters", ylab="Within groups sum of squares")
-
-#compute k means
-met <- kmeans(log_met, 3, nstart=30)
-met$cluster
-print(met)
-prot <- kmeans(log_prot, 3, iter.max=10, nstart=30)
-prot$cluster
-print(prot)
-
-#visualize clusters
-fviz_cluster(k2, data = df)
-
-df %>%
-  as_tibble() %>%
-  mutate(cluster = k2$cluster,
-         state = row.names(USArrests)) %>%
-  ggplot(aes(UrbanPop, Murder, color = factor(cluster), label = state)) +
-  geom_text()
+fviz_nbclust(log_met, kmeans, method = "wss")
+fviz_nbclust(log_prot, kmeans, method = "wss")
 ```
 
+# K means MET
+```{r}
+#compute k means
+met2 <- kmeans(log_met, 2, nstart=30)
+met3 <- kmeans(log_met, 3, nstart=30)
+met4 <- kmeans(log_met, 4, nstart=30)
+
+#visualize clusters
+fviz_cluster(met2, data = log_met)
+fviz_cluster(met3, data = log_met)
+fviz_cluster(met4, data = log_met)
+```
+
+# K means PROT
+```{r}
+#compute k means
+prot2 <- kmeans(log_prot, 2, nstart=30)
+
+#visualize clusters
+fviz_cluster(prot2, data = log_prot)
+```
 
