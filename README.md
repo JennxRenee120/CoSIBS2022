@@ -6,4 +6,6 @@ This project aims to perform unsupervised learning on multi-omics data, includin
 
 ## Dependencies
 
-W
+Data Visualization:
+
+Biostatistics-Specific: 
