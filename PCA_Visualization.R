@@ -25,8 +25,7 @@ new_pro <- knn_log2(pro_dat)
 
 ## Metabolome first two principal components
 #  No scaling
-pr.met <- prcomp(new_met)
-plot(pr.met$x[,1:2], main = "PC-1 vs PC-2 in Metabolome")
+plot(prcomp(new_met)$x[,1:2], main = "PC-1 vs PC-2 in Metabolome")
 
 ## Proteome first two principal components
 #No scaling
@@ -36,17 +35,17 @@ plot(pr.pro$x[,1:2])
 ## Metabolome first two principal components
 #Scaled
 pr.met <- prcomp(new_met, scale. = T)
-plot(pr.met$x[,1:2])
+plot(prcomp(new_met, scale. = T)$x[,1:2])
 
 ## Proteome first two principal components
 #Scaled
 pr.pro <- prcomp(new_pro, scale. = T)
-plot(pr.pro$x[,1:2])
+plot(prcomp(new_pro, scale. = T)$x[,1:2])
 
 ## Trying to combine proteome and metabolome
 
 ## pulling out first two PCs
-pro_pc12 <- pr.pro$x[,1:2]
+pro_pc12 <- prcomp(new_met, scale. = T)$x[,1:2]
 met_pc12 <- pr.met$x[,1:2]
 
 ## labeling whether protein or metabolite
