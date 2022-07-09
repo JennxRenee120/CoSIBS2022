@@ -38,7 +38,7 @@ A <- matrix(rep(0, num_col^2), nrow = num_col)
 for (i in 1:num_col) {
   for (j in 1:num_col) {
     if(i!=j){
-      diff <- new_met[i, ]-new_met[j, ]
+      diff <- new_met[i, ] - new_met[j, ]
       nm <- sum(diff^2)
     A[i, j] <- exp(-nm/(2*sigma^2))
     }
@@ -55,14 +55,14 @@ L <- D %*% A %*% D
 ev <- eigen(L)
 names(ev)
 
-x <- ev$vectors[, 1:2]
+x <- ev$vectors[, 15:18]
 sum(is.na(x))
 nrow(x)
 ```
 
 ```{r}
 for (i in 1:nrow(x)) {
-  if((sum(x[i, ] == c(0,0)))!=2){
+  if((sum(x[i, ] == c(0,0)))!=4){
     my_len <- sqrt(sum((x[i, ])^2))
     x[i, ] <- x[i, ]/my_len
   }
@@ -71,7 +71,7 @@ for (i in 1:nrow(x)) {
 
 y <- x
 
-km.out <- kmeans(y, 2, nstart = 20)
+km.out <- kmeans(y, 4, nstart = 20)
 my_clusters <- km.out$cluster
 my_clusters
 ```
@@ -82,6 +82,11 @@ my_clusters
 ggplot(data.frame(prcomp(new_met)$x[,1:2])) + 
   geom_point(mapping = aes(x = prcomp(new_met)$x[,1],
                            y = prcomp(new_met)$x[,2],
+                           col = as.factor(my_clusters)))
+
+ggplot(data.frame(y)) + 
+  geom_point(mapping = aes(x = y[,1],
+                           y = y[,2],
                            col = as.factor(my_clusters)))
 ```
 
