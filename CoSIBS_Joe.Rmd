@@ -101,7 +101,7 @@ Zhang_kernel(metImp, p=10) %>%
 ```
 
 ```{r}
-Zhang_kernel(proImp, p=15) %>% 
+Zhang_kernel(proImp, p=10) %>% 
   heatmap
 ```
 
@@ -117,7 +117,7 @@ Spectrum_kernel(metImp, NN = 3, NN2 = 7) %>%
 ```
 
 ```{r}
-Spectrum_kernel(proImp, NN = 4, NN2 = 7) %>% 
+Spectrum_kernel(proImp, NN = 3, NN2 = 7) %>% 
   heatmap()
 ```
 
@@ -182,7 +182,7 @@ ev_met %>% as.data.frame %>%
 ```
 
 ```{r}
-k <- 3
+k <- 2
 ev_pro <- eig_pro$vectors[, 1:k] # why are we choosing the first n vectors here? are the ordered in some way?
 
 set.seed(321)
@@ -191,7 +191,7 @@ km_pro <- kmeans(ev_pro, centers = k)
 ev_pro %>% as.data.frame %>%
   mutate(clust = km_pro$cluster) %>% ## adding clusters
   plot_ly() %>%
-  add_markers(x=~V1, y=~V2, z=~V3, color = ~clust)
+  add_markers(x=~V1, y=~V2, color = ~clust)
 ```
 
 
