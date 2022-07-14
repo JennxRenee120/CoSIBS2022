@@ -14,7 +14,7 @@ pro_dat <- read.delim("Proteins.txt", sep = " ")
 knn_log2 <- function(dat){
   dat %>%
     kNN(k = 10) %>%
-    select(1:64) %>%
+    select(-ends_with("_imp")) %>%
     log2()
 }
 

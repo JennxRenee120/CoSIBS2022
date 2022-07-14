@@ -1,0 +1,202 @@
+---
+title: "Spectral Clustering"
+author: "Charlie Carpenter (with Joe Nagel edits)"
+date: '2022-07-07'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(VIM); library(dplyr); library(magrittr); library(plotly)
+```
+
+### Reading in data and sourcing files
+
+```{r}
+
+source("../CharlieCode/CoSIBS.R")
+
+```
+
+
+```{r}
+pro <- read.table("../Data/Proteins.txt")
+met <- read.table("../Data/Metabolites.txt")
+```
+
+## Normalize and Impute
+
+```{r}
+
+(
+  met
+  %>% log2()
+  %>% kNN()
+  %>% select(-ends_with("_imp"))
+) ->metImp 
+
+```
+
+```{r}
+
+(
+  pro
+  %>% log2()
+  %>% kNN()
+  %>% select(-ends_with("_imp"))
+) ->proImp 
+
+```
+
+
+## Visualizing different distance kernels
+
+The code for these kernels are in the CoSIBS.R file. You can think of kernels as general pairwise similarity matrices. A correlation matrix is a type of kernel.
+
+#### Gaussian kernel
+Looking at the heatmap for the Gaussian kernel. `median(dist(X))` is a common choice for $\rho$, but it isn't working for us. It washes out all of the data. What we really want is median "within cluster" distance, but, since we don't know the clusters, we can not calculate this.
+
+```{r}
+Gaussian_kernel(metImp, rho = median(dist(metImp))) %>% 
+  heatmap
+```
+
+```{r}
+Gaussian_kernel(proImp, rho = median(dist(metImp))) %>% 
+  heatmap
+```
+
+
+Another choice would be the median covariance between subject.
+
+```{r}
+covs <- cov(t(metImp))
+lt <- lower.tri(covs) ## only grabbing covariances
+rho <- median(covs[lt])
+
+Gaussian_kernel(metImp, rho = rho) %>% 
+  heatmap
+```
+
+```{r}
+covs <- cov(t(proImp))
+lt <- lower.tri(covs) ## only grabbing covariances
+rho <- median(covs[lt])
+
+Gaussian_kernel(proImp, rho = rho) %>% 
+  heatmap
+```
+
+
+Still not working!! Let's use some other kernels (pairwise similarity measures) that were designed for omics spectral clustering.
+
+#### Zhang Kernel
+
+The Zhang kernel has its own was to estimate $\rho$ that is only based on the $p$ nearest neighbors within the graph. Please see how changing $p$ changes our adjacency matrix.
+
+```{r}
+Zhang_kernel(metImp, p=10) %>% 
+  heatmap
+```
+
+```{r}
+Zhang_kernel(proImp, p=15) %>% 
+  heatmap
+```
+
+
+
+#### Spectrum kernel
+
+The Spectrum kernel upgraded the Zhang kernel to include even more 'self tuning' aspects. [Check out their paper](https://academic.oup.com/bioinformatics/article/36/4/1159/5566508#199177546) for more details. It is a pretty easy read.
+
+```{r}
+Spectrum_kernel(metImp, NN = 3, NN2 = 7) %>% 
+  heatmap()
+```
+
+```{r}
+Spectrum_kernel(proImp, NN = 4, NN2 = 7) %>% 
+  heatmap()
+```
+
+
+
+Some more defined clusters but nothing really clear. This data is noisy!
+
+### Calculating the Laplacian
+
+This is also a function from the CoSIBS.R file. You should take a look at it to see all of the options.
+
+```{r}
+L_met <- Laplacian(metImp, kernel = "Spectrum",
+               lap.type = "rw",
+               grf.type = "knn", k = 5) ## K nearest neighbor graph
+
+```
+
+```{r}
+
+L_pro <- Laplacian(proImp, kernel = "Spectrum",
+               lap.type = "rw",
+               grf.type = "knn", k = 5)
+
+```
+
+
+
+### Eigen Analysis
+
+```{r}
+eig_met <- eigen(L_met)
+plot(eig_met$values)
+```
+
+```{r}
+
+eig_pro <- eigen(L_pro)
+plot(eig_pro$values)
+
+```
+
+
+
+Not a lot of clear information from this plot of the eigen vectors. Maybe you see an elbow? Let's call it 3 groups to demonstrate. 
+
+### Eigen embedding and clustering
+
+```{r}
+k <- 3
+ev_met <- eig_met$vectors[, 1:k]
+
+set.seed(234) ## always!
+km_met <- kmeans(ev_met, centers = k)
+
+## Plotting
+
+ev_met %>% as.data.frame %>% 
+  mutate(clust = km_met$cluster) %>% ## adding clusters
+  plot_ly() %>%
+  add_markers(x=~V1, y=~V2, z=~V3, color = ~clust)
+```
+
+```{r}
+k <- 3
+ev_pro <- eig_pro$vectors[, 1:k] # why are we choosing the first n vectors here? are the ordered in some way?
+
+set.seed(321)
+km_pro <- kmeans(ev_pro, centers = k)
+
+ev_pro %>% as.data.frame %>%
+  mutate(clust = km_pro$cluster) %>% ## adding clusters
+  plot_ly() %>%
+  add_markers(x=~V1, y=~V2, z=~V3, color = ~clust)
+```
+
+
+
+
+
+
+
