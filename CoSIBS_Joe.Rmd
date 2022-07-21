@@ -8,7 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-library(VIM); library(dplyr); library(magrittr); library(plotly)
+library(VIM); library(dplyr); library(magrittr); library(plotly); library(igraph);library(ClusterR)
 ```
 
 ### Reading in data and sourcing files
@@ -34,7 +34,7 @@ met <- read.table("../Data/Metabolites.txt")
   %>% log2()
   %>% kNN()
   %>% select(-ends_with("_imp"))
-) ->metImp 
+) -> metImp 
 
 ```
 
@@ -45,7 +45,7 @@ met <- read.table("../Data/Metabolites.txt")
   %>% log2()
   %>% kNN()
   %>% select(-ends_with("_imp"))
-) ->proImp 
+) -> proImp 
 
 ```
 
@@ -132,7 +132,7 @@ This is also a function from the CoSIBS.R file. You should take a look at it to 
 ```{r}
 L_met <- Laplacian(metImp, kernel = "Spectrum",
                lap.type = "rw",
-               grf.type = "knn", k = 5) ## K nearest neighbor graph
+               grf.type = "knn", k = 6)
 
 ```
 
@@ -140,7 +140,7 @@ L_met <- Laplacian(metImp, kernel = "Spectrum",
 
 L_pro <- Laplacian(proImp, kernel = "Spectrum",
                lap.type = "rw",
-               grf.type = "knn", k = 5)
+               grf.type = "knn", k = 6)
 
 ```
 
@@ -168,7 +168,10 @@ Not a lot of clear information from this plot of the eigen vectors. Maybe you se
 
 ```{r}
 k <- 3
-ev_met <- eig_met$vectors[, 1:k]
+
+ind_met <- (ncol(eig_met$vectors)-k+1):ncol(eig_met$vectors)
+
+ev_met <- eig_met$vectors[, ind_met]
 
 set.seed(234) ## always!
 km_met <- kmeans(ev_met, centers = k)
@@ -178,12 +181,14 @@ km_met <- kmeans(ev_met, centers = k)
 ev_met %>% as.data.frame %>% 
   mutate(clust = km_met$cluster) %>% ## adding clusters
   plot_ly() %>%
-  add_markers(x=~V1, y=~V2, z=~V3, color = ~clust)
+  add_markers(x=~V1, y=~V2, color = ~clust)
 ```
 
 ```{r}
 k <- 2
-ev_pro <- eig_pro$vectors[, 1:k] # why are we choosing the first n vectors here? are the ordered in some way?
+ind_pro <- (ncol(eig_pro$vectors)-k+1):ncol(eig_pro$vectors)
+
+ev_pro <- eig_pro$vectors[, ind_pro]
 
 set.seed(321)
 km_pro <- kmeans(ev_pro, centers = k)

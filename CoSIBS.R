@@ -73,24 +73,29 @@ knnGrf <- function(A, k, mutual=FALSE){
 Laplacian <- function(dat, rho=NULL, kernel='Gaussian',
                       lap.type = 'sym',
                       grf.type = 'full', k=5, p=5,
-                      binary.grf = FALSE,
-                      epsilon=NULL, mutual=FALSE){
-                        
+                      epsilon=0, mutual=FALSE, 
+                      binary.grf=FALSE,
+                      plots=TRUE, verbose=TRUE){
+  
   if(is.null(rho)) rho <- median(dist(dat))
   if(kernel == 'Gaussian') A <- Gaussian_kernel(dat, rho = rho)
   
   if(kernel == 'Zhang') A <- Zhang_kernel(dat, p)
   if(kernel == 'Spectrum'){
-    td <- t(dat)
-    dtd <- as.data.frame(td)
-    
+    dtd <- as.data.frame( t(dat) )
     A <- Spectrum::CNN_kernel(dtd)
-  } 
+  }
   
   if(kernel == 'Linear') A <- dat%*%t(dat)
   if(kernel == 'Cor') A <- cor(t(dat))
   
   diag(A) <- 0 ## Adjacency matrices need diag of 0
+  
+  if(verbose){
+    message(paste('Distances calculated with', kernel, 'kernel.'))
+    message("Summary of parwise distances:")
+    print(summary(A[lower.tri(A)]))
+  }
   
   if(grf.type == 'e-graph'){
     A[A < epsilon] <- 0
@@ -100,7 +105,16 @@ Laplacian <- function(dat, rho=NULL, kernel='Gaussian',
     A <- knnGrf(A, k, mutual=mutual)
   }
   
-  if(binary.grf) A[A>0] <- 1
+  if(binary.grf) A[A >0] <- 1
+  
+  if(plots){
+    heatmap(A)
+    gg <- igraph::graph_from_adjacency_matrix(A, 
+                                              mode='undirected',
+                                              weighted = TRUE)
+    plot(gg, layout=layout_with_kk, vertex.color='darkorchid2',
+         vertex.label=NA)
+  }
   
   deg <- rowSums(A)
   
