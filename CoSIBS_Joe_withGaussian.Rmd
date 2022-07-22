@@ -1,0 +1,224 @@
+---
+title: "Spectral Clustering"
+author: "Charlie Carpenter (with Joe Nagel & Jennifer Leach edits)"
+date: '2022-07-07'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(VIM); library(dplyr); library(magrittr); library(plotly); library(igraph);library(ClusterR)
+```
+
+### Reading in data and sourcing files
+
+```{r}
+
+source("CoSIBS.R")
+
+```
+
+
+```{r}
+pro <- read.table("Proteins.txt")
+met <- read.table("Metabolites.txt")
+```
+
+## Normalize and Impute
+
+```{r}
+
+(
+  met
+  %>% log2()
+  %>% kNN()
+  %>% select(-ends_with("_imp"))
+) -> metImp 
+
+```
+
+```{r}
+
+(
+  pro
+  %>% log2()
+  %>% kNN()
+  %>% select(-ends_with("_imp"))
+) -> proImp 
+
+```
+
+
+## Visualizing different distance kernels
+
+The code for these kernels are in the CoSIBS.R file. You can think of kernels as general pairwise similarity matrices. A correlation matrix is a type of kernel.
+
+#### Gaussian kernel
+Looking at the heatmap for the Gaussian kernel. `median(dist(X))` is a common choice for $\rho$, but it isn't working for us. It washes out all of the data. What we really want is median "within cluster" distance, but, since we don't know the clusters, we can not calculate this.
+
+```{r}
+Gaussian_kernel(metImp, rho = median(dist(metImp))) %>% 
+  heatmap
+```
+
+```{r}
+Gaussian_kernel(proImp, rho = median(dist(metImp))) %>% 
+  heatmap
+```
+
+
+Another choice would be the median covariance between subject.
+
+```{r}
+covs <- cov(t(metImp))
+lt <- lower.tri(covs) ## only grabbing covariances
+rho <- median(covs[lt])
+
+Gaussian_kernel(metImp, rho = rho) %>% 
+  heatmap
+```
+
+```{r}
+covs <- cov(t(proImp))
+lt <- lower.tri(covs) ## only grabbing covariances
+rho <- median(covs[lt])
+
+Gaussian_kernel(proImp, rho = rho) %>% 
+  heatmap
+```
+
+
+Still not working!! Let's use some other kernels (pairwise similarity measures) that were designed for omics spectral clustering.
+
+#### Zhang Kernel
+
+The Zhang kernel has its own was to estimate $\rho$ that is only based on the $p$ nearest neighbors within the graph. Please see how changing $p$ changes our adjacency matrix.
+
+```{r}
+Zhang_kernel(metImp, p=10) %>% 
+  heatmap
+```
+
+```{r}
+Zhang_kernel(proImp, p=10) %>% 
+  heatmap
+```
+
+
+
+#### Spectrum kernel
+
+The Spectrum kernel upgraded the Zhang kernel to include even more 'self tuning' aspects. [Check out their paper](https://academic.oup.com/bioinformatics/article/36/4/1159/5566508#199177546) for more details. It is a pretty easy read.
+
+```{r}
+Spectrum_kernel(metImp, NN = 3, NN2 = 7) %>% 
+  heatmap()
+```
+
+```{r}
+Spectrum_kernel(proImp, NN = 3, NN2 = 7) %>% 
+  heatmap()
+```
+
+
+
+Some more defined clusters but nothing really clear. This data is noisy!
+
+### Calculating the Laplacian
+
+This is also a function from the CoSIBS.R file. You should take a look at it to see all of the options.
+
+```{r}
+L_met <- Laplacian(metImp, kernel = "Spectrum",
+               lap.type = "rw",
+               grf.type = "knn", k = 6)
+
+```
+
+```{r}
+
+L_pro <- Laplacian(proImp, kernel = "Spectrum",
+               lap.type = "rw",
+               grf.type = "knn", k = 6)
+
+```
+
+
+
+### Eigen Analysis
+
+```{r}
+eig_met <- eigen(L_met)
+plot(eig_met$values)
+```
+
+```{r}
+
+eig_pro <- eigen(L_pro)
+plot(eig_pro$values)
+
+```
+
+
+
+Not a lot of clear information from this plot of the eigen vectors. Maybe you see an elbow? Let's call it 3 groups to demonstrate. 
+
+### Eigen embedding and clustering
+
+```{r}
+k <- 3
+
+ind_met <- (ncol(eig_met$vectors)-k+1):ncol(eig_met$vectors)
+
+ev_met <- eig_met$vectors[, ind_met]
+
+set.seed(234) ## always!
+opt_gmm_met = Optimal_Clusters_GMM(ev_met, max_clusters = 10, criterion = "AIC", 
+                               dist_mode = "eucl_dist", seed_mode = "random_subset",
+                              km_iter = 10, em_iter = 10, var_floor = 1e-10, 
+                            plot_data = T, seed = 234)
+#I'm not sure what the optimal is above.. 6? 8? 
+gmm_met = GMM(ev_met, 8, dist_mode = "eucl_dist", seed_mode = "random_subset", km_iter = 10,
+          em_iter = 10, verbose = F)
+pred_gmm_met = predict(gmm_met, ev_met)
+
+#km_met <- kmeans(ev_met, centers = k)
+
+## Plotting
+
+ev_met %>% as.data.frame %>% 
+  mutate(clust = pred_gmm_met) %>% ## adding clusters
+  plot_ly() %>%
+  add_markers(x=~V1, y=~V2, color = ~clust)
+```
+
+```{r}
+k <- 3
+ind_pro <- (ncol(eig_pro$vectors)-k+1):ncol(eig_pro$vectors)
+
+ev_pro <- eig_pro$vectors[, ind_pro]
+
+set.seed(321)
+opt_gmm_pro = Optimal_Clusters_GMM(ev_pro, max_clusters = 10, criterion = "AIC", 
+                               dist_mode = "eucl_dist", seed_mode = "random_subset",
+                              km_iter = 10, em_iter = 10, var_floor = 1e-10, 
+                            plot_data = T, seed = 321)
+#Optimal Cluster = 3 
+gmm_pro = GMM(ev_pro, 3, dist_mode = "eucl_dist", seed_mode = "random_subset", km_iter = 10,
+          em_iter = 10, verbose = F)
+pred_gmm_pro = predict(gmm_pro, ev_pro)
+#km_pro <- kmeans(ev_pro, centers = k)
+
+ev_pro %>% as.data.frame %>%
+  mutate(clust = pred_gmm_pro) %>% ## adding clusters
+  plot_ly() %>%
+  add_markers(x=~V1, y=~V2, color = ~clust)
+```
+
+
+
+
+
+
+
